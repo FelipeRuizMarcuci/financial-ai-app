@@ -1,16 +1,11 @@
 import Logo from "@/components/ui/logo";
 import AuthCard from "@/components/ui/authCard";
-
 import { User } from "lucide-react";
-import AppHeader from "@/components/layout/header";
 import Input from "@/components/ui/input";
-import AppFooter from "@/components/layout/footer";
 
 export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#050913] text-white">
-      <AppHeader />
-
       <section className="flex min-h-[calc(100vh-145px)] items-center justify-center px-6 py-16">
         <div className="w-full max-w-md">
           <div className="mb-10 flex justify-center">
@@ -33,8 +28,6 @@ export default function RegisterPage() {
           />
         </div>
       </section>
-
-      <AppFooter />
     </div>
   );
 }

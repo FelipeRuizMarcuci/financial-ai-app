@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import AppFooter from "@/components/layout/footer";
 import AppHeader from "@/components/layout/header";
+import AppModal from "@/components/ui/appModal";
 import { PiggyBank, Plus, Target, TrendingUp, Wallet } from "lucide-react";
 
 type Goal = {
@@ -42,6 +43,13 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[]>(initialGoals);
   const [inputs, setInputs] = useState<Record<number, string>>({});
 
+  // 🔥 NOVOS STATES (modal)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newGoal, setNewGoal] = useState({
+    title: "",
+    target: "",
+  });
+
   function handleInputChange(goalId: number, value: string) {
     const normalized = value.replace(",", ".");
     setInputs((prev) => ({
@@ -71,6 +79,25 @@ export default function GoalsPage() {
       ...prev,
       [goalId]: "",
     }));
+  }
+
+  // 🔥 NOVA FUNÇÃO (criar meta)
+  function handleCreateGoal() {
+    const target = Number(newGoal.target);
+
+    if (!newGoal.title || Number.isNaN(target) || target <= 0) return;
+
+    const newItem: Goal = {
+      id: Date.now(),
+      title: newGoal.title,
+      current: 0,
+      target,
+    };
+
+    setGoals((prev) => [newItem, ...prev]);
+
+    setNewGoal({ title: "", target: "" });
+    setIsModalOpen(false);
   }
 
   const summary = useMemo(() => {
@@ -107,7 +134,11 @@ export default function GoalsPage() {
             </p>
           </div>
 
-          <button className="inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110">
+          {/* 🔥 BOTÃO ATUALIZADO */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+          >
             <Plus className="h-4 w-4" />
             Nova meta
           </button>
@@ -217,17 +248,49 @@ export default function GoalsPage() {
                       Adicionar fundos
                     </button>
                   </div>
-
-                  <p className="mt-3 text-xs text-slate-500">
-                    No backend, essa ação pode criar um histórico de aportes e
-                    recalcular o progresso da meta.
-                  </p>
                 </div>
               </div>
             );
           })}
         </div>
       </section>
+
+      {/* 🔥 MODAL ADICIONADO */}
+      <AppModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Nova meta"
+        subtitle="Defina um objetivo financeiro"
+      >
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Nome da meta"
+            value={newGoal.title}
+            onChange={(e) =>
+              setNewGoal((prev) => ({ ...prev, title: e.target.value }))
+            }
+            className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-slate-500"
+          />
+
+          <input
+            type="number"
+            placeholder="Valor alvo"
+            value={newGoal.target}
+            onChange={(e) =>
+              setNewGoal((prev) => ({ ...prev, target: e.target.value }))
+            }
+            className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-slate-500"
+          />
+
+          <button
+            onClick={handleCreateGoal}
+            className="w-full rounded-2xl bg-emerald-400 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+          >
+            Criar meta
+          </button>
+        </div>
+      </AppModal>
 
       <AppFooter />
     </div>

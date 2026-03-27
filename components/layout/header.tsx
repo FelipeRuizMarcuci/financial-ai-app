@@ -1,7 +1,24 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "@/components/ui/logo";
+import { useEffect, useState } from "react";
 
 export default function AppHeader() {
+  const [isLogged, setIsLogged] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const cookies = document.cookie;
+
+    if (cookies.includes("token")) {
+      setIsLogged(true);
+
+      // 🔹 Temporário (até ter backend)
+      setUserName("Felipe");
+    }
+  }, []);
+
   return (
     <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
@@ -37,11 +54,20 @@ export default function AppHeader() {
           </Link>
 
           <Link
-            href="/register"
-            className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110"
+            href="/insights"
+            className="rounded-xl px-4 py-2 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
           >
-            Criar conta
+            Insights IA
           </Link>
+
+          {isLogged && (
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10 transition cursor-pointer">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400 text-xs font-bold text-slate-900">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+              {userName}
+            </div>
+          )}
         </nav>
       </div>
     </header>
