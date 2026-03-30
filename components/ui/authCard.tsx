@@ -70,7 +70,9 @@ export default function AuthCard({
           icon={<Mail className="h-4 w-4" />}
           placeholder="seu@email.com"
           value={email}
-          onChange={(e: unknown) => setEmail(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setEmail(e.target.value)
+          }
         />
 
         <Input
@@ -78,7 +80,9 @@ export default function AuthCard({
           placeholder="Senha"
           type="password"
           value={password}
-          onChange={(e: unknown) => setPassword(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setPassword(e.target.value)
+          }
         />
 
         <button
