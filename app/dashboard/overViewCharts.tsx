@@ -1,7 +1,7 @@
 // components/dashboard/OverviewChart.tsx
 "use client";
 
-import { currency, monthlyOverviewData } from "@/lib/mock";
+import { currency } from "@/lib/utils";
 import {
   Area,
   AreaChart,
@@ -12,11 +12,19 @@ import {
   YAxis,
 } from "recharts";
 
-export default function OverviewChart() {
+type OverviewChartProps = {
+  data: {
+    date: string;
+    income: number;
+    expense: number;
+  }[];
+};
+
+export default function OverviewChart({ data }: OverviewChartProps) {
   return (
     <div className="h-[320px] w-full rounded-2xl bg-slate-950/40 p-4">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={monthlyOverviewData}>
+        <AreaChart data={data}>
           <defs>
             <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#34d399" stopOpacity={0.35} />
@@ -35,7 +43,7 @@ export default function OverviewChart() {
           />
 
           <XAxis
-            dataKey="month"
+            dataKey="date"
             axisLine={false}
             tickLine={false}
             tick={{ fill: "#94a3b8", fontSize: 12 }}

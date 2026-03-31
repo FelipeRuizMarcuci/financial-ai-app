@@ -5,6 +5,7 @@ import { ArrowRight, Lock, Mail } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import Input from "./input";
+import { login } from "@/src/services/auth.service";
 
 type AuthCardProps = {
   title: string;
@@ -36,20 +37,21 @@ export default function AuthCard({
     setLoading(true);
 
     try {
-      // 🔹 Simulação de login (substitua por sua API)
-      if (email === "admin@email.com" && password === "123456") {
-        // salva token no cookie
-        document.cookie = "token=meu-token-fake; path=/";
+      const data = await login(email, password);
 
-        router.push("/dashboard");
-      } else {
-        alert("Credenciais inválidas");
-      }
-    } catch (error) {
+      localStorage.setItem("token", data.access_token);
+      document.cookie = `token=${data.access_token}; path=/`;
+
+      console.log(data.access_token);
+      router.push("/dashboard");
+    } catch (error: unknown) {
       console.error(error);
-      alert("Erro ao fazer login");
-    } finally {
-      setLoading(false);
+
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("Erro ao fazer login");
+      }
     }
   }
 

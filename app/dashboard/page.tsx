@@ -1,7 +1,8 @@
+"use client";
+
 import AppFooter from "@/components/layout/footer";
 import AppHeader from "@/components/layout/header";
 import StatCard from "@/components/ui/statCard";
-import { currency, sampleTransactions } from "@/lib/mock";
 import {
   BarChart3,
   CreditCard,
@@ -14,20 +15,32 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import OverviewChart from "./overViewCharts";
+import { useEffect, useState } from "react";
+import { getDashboard } from "@/src/services/dashboard.service";
+import { DashboardData } from "@/types/dashboard";
+import { currency } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const income = sampleTransactions
-    .filter((item) => item.type === "income")
-    .reduce((acc, item) => acc + item.amount, 0);
+  const [loading, setLoading] = useState(false);
+  const [period, setPeriod] = useState("last_6_months");
+  const [data, setData] = useState<DashboardData | null>(null);
 
-  const expense = sampleTransactions
-    .filter((item) => item.type === "expense")
-    .reduce((acc, item) => acc + item.amount, 0);
+  useEffect(() => {
+    setLoading(true);
+    getDashboard(period)
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, [period]);
 
-  const balance = income - expense;
-  const savingRate =
-    income > 0 ? Math.max(((income - expense) / income) * 100, 0) : 0;
-  const recentTransactions = sampleTransactions.slice().reverse().slice(0, 4);
+  useEffect(() => {
+    getDashboard(period).then(setData);
+  }, [period]);
+
+  if (!data) {
+    return <div className="text-white p-10">Carregando...</div>;
+  }
+
+  const { summary, recentTransactions, topTransactions, chart } = data;
 
   return (
     <div className="min-h-screen bg-[#050913] text-white">
@@ -59,24 +72,24 @@ export default function DashboardPage() {
         <div className="grid gap-5 lg:grid-cols-4">
           <StatCard
             title="Saldo do mês"
-            value={currency.format(balance)}
+            value={currency.format(summary.balance)}
             icon={<CreditCard className="h-5 w-5" />}
-            negative={balance < 0}
+            negative={summary.balance < 0}
           />
           <StatCard
             title="Receitas"
-            value={currency.format(income)}
+            value={currency.format(summary.income)}
             icon={<TrendingUp className="h-5 w-5" />}
           />
           <StatCard
             title="Despesas"
-            value={currency.format(expense)}
+            value={currency.format(summary.expense)}
             icon={<TrendingDown className="h-5 w-5" />}
             negative
           />
           <StatCard
             title="Economia"
-            value={`${savingRate.toFixed(0)}%`}
+            value={`${summary.savingsRate.toFixed(0)}%`}
             icon={<PiggyBank className="h-5 w-5" />}
           />
         </div>
@@ -92,12 +105,24 @@ export default function DashboardPage() {
                   Receitas e despesas dos últimos meses
                 </p>
               </div>
-              <div className="rounded-2xl bg-white/5 px-3 py-2 text-xs text-slate-300">
-                Últimos 6 meses
-              </div>
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="rounded-2xl bg-white/5 px-3 py-2 text-xs text-slate-300 outline-none"
+              >
+                <option value="current_month">Mês atual</option>
+                <option value="last_month">Último mês</option>
+                <option value="last_6_months">Últimos 6 meses</option>
+              </select>
             </div>
 
-            <OverviewChart />
+            {loading ? (
+              <div className="h-[320px] flex items-center justify-center text-slate-400">
+                Atualizando...
+              </div>
+            ) : (
+              <OverviewChart data={chart} />
+            )}
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl bg-emerald-500/10 p-4">
@@ -106,7 +131,7 @@ export default function DashboardPage() {
                 </p>
                 <p className="mt-2 text-lg font-semibold text-white">Salário</p>
                 <p className="mt-1 text-sm text-slate-300">
-                  {currency.format(4200)}
+                  {currency.format(topTransactions.topIncome?.value ?? 0)}
                 </p>
               </div>
 
@@ -116,7 +141,7 @@ export default function DashboardPage() {
                   Supermercado
                 </p>
                 <p className="mt-1 text-sm text-slate-300">
-                  {currency.format(850)}
+                  {currency.format(topTransactions.topExpense?.value ?? 0)}
                 </p>
               </div>
             </div>
@@ -167,12 +192,12 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-                        transaction.type === "income"
+                        transaction.type === "REVENUE"
                           ? "bg-emerald-500/10 text-emerald-400"
                           : "bg-rose-500/10 text-rose-400"
                       }`}
                     >
-                      {transaction.type === "income" ? (
+                      {transaction.type === "REVENUE" ? (
                         <TrendingUp className="h-4 w-4" />
                       ) : (
                         <TrendingDown className="h-4 w-4" />
@@ -190,13 +215,13 @@ export default function DashboardPage() {
 
                   <p
                     className={
-                      transaction.type === "income"
+                      transaction.type === "REVENUE"
                         ? "font-semibold text-emerald-400"
                         : "font-semibold text-rose-400"
                     }
                   >
-                    {transaction.type === "income" ? "+" : "-"}
-                    {currency.format(transaction.amount)}
+                    {transaction.type === "REVENUE" ? "+" : "-"}
+                    {currency.format(transaction.value)}
                   </p>
                 </div>
               ))}

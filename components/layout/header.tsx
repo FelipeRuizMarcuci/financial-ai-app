@@ -9,13 +9,11 @@ export default function AppHeader() {
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
-    const cookies = document.cookie;
+    const token = localStorage.getItem("token");
 
-    if (cookies.includes("token")) {
+    if (token) {
       setIsLogged(true);
-
-      // 🔹 Temporário (até ter backend)
-      setUserName("Felipe");
+      setUserName("Felipe"); // depois você troca isso
     }
   }, []);
 
