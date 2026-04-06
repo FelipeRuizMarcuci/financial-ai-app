@@ -13,6 +13,49 @@ import {
   Transaction,
 } from "@/src/services/transactions.service";
 
+type TransactionType = "REVENUE" | "EXPENSE";
+
+type Category =
+  | "FOOD"
+  | "TRANSPORT"
+  | "HOME"
+  | "HEALTH"
+  | "FUN"
+  | "EDUCATION"
+  | "SUBSCRIPTIONS"
+  | "SALARY"
+  | "FREELANCE"
+  | "INVESTMENTS"
+  | "OTHERS";
+
+const categoryOptions: Record<TransactionType, Category[]> = {
+  REVENUE: ["SALARY", "FREELANCE", "INVESTMENTS", "OTHERS"],
+  EXPENSE: [
+    "FOOD",
+    "TRANSPORT",
+    "HOME",
+    "HEALTH",
+    "FUN",
+    "EDUCATION",
+    "SUBSCRIPTIONS",
+    "OTHERS",
+  ],
+};
+
+const categoryLabels: Record<Category, string> = {
+  FOOD: "Alimentação",
+  TRANSPORT: "Transporte",
+  HOME: "Moradia",
+  HEALTH: "Saúde",
+  FUN: "Diversão",
+  EDUCATION: "Educação",
+  SUBSCRIPTIONS: "Assinaturas",
+  SALARY: "Salário",
+  FREELANCE: "Freelance",
+  INVESTMENTS: "Investimentos",
+  OTHERS: "Outros",
+};
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,8 +68,25 @@ export default function TransactionsPage() {
   // form
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"REVENUE" | "EXPENSE">("REVENUE");
+  const [categorie, setCategorie] = useState<
+    | "FOOD"
+    | "TRANSPORT"
+    | "HOME"
+    | "HEALTH"
+    | "FUN"
+    | "EDUCATION"
+    | "SUBSCRIPTIONS"
+    | "SALARY"
+    | "FREELANCE"
+    | "INVESTMENTS"
+    | "OTHERS"
+  >("FOOD");
   const [value, setValue] = useState("");
   const [date, setDate] = useState("");
+
+  useEffect(() => {
+    setCategorie(categoryOptions[type][0]);
+  }, [type]);
 
   useEffect(() => {
     loadTransactions();
@@ -61,6 +121,7 @@ export default function TransactionsPage() {
 
       setTitle("");
       setType("REVENUE");
+      setCategorie("FOOD");
       setValue("");
       setDate("");
 
@@ -199,16 +260,28 @@ export default function TransactionsPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Título"
-            className="h-12 w-full rounded-2xl bg-white/5 px-4"
+            className="h-12 w-full rounded-2xl bg-white/5 bg-slate-900/80 px-4"
           />
 
           <select
             value={type}
             onChange={(e) => setType(e.target.value as "REVENUE" | "EXPENSE")}
-            className="h-12 w-full rounded-2xl bg-white/5 px-4"
+            className="h-12 w-full rounded-2xl bg-white/5 bg-slate-900/80 px-4"
           >
             <option value="REVENUE">Receita</option>
             <option value="EXPENSE">Despesa</option>
+          </select>
+
+          <select
+            value={categorie}
+            onChange={(e) => setCategorie(e.target.value as Category)}
+            className="h-12 w-full rounded-2xl bg-white/5 bg-slate-900/80 px-4"
+          >
+            {categoryOptions[type].map((cat) => (
+              <option key={cat} value={cat}>
+                {categoryLabels[cat]}
+              </option>
+            ))}
           </select>
 
           <input
@@ -216,14 +289,14 @@ export default function TransactionsPage() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Valor"
-            className="h-12 w-full rounded-2xl bg-white/5 px-4"
+            className="h-12 w-full rounded-2xl bg-white/5 bg-slate-900/80 px-4"
           />
 
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="h-12 w-full rounded-2xl bg-white/5 px-4"
+            className="h-12 w-full rounded-2xl bg-white/5 bg-slate-900/80 px-4"
           />
 
           <div className="flex justify-end gap-3">
