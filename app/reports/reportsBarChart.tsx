@@ -1,6 +1,6 @@
 "use client";
 
-import { currency, reportsDailyData } from "@/lib/mock";
+import { currency } from "@/lib/utils";
 import {
   Bar,
   BarChart,
@@ -11,11 +11,19 @@ import {
   YAxis,
 } from "recharts";
 
-export default function ReportsBarChart() {
+type ReportsBarChartProps = {
+  data: {
+    day: string;
+    income: number;
+    expense: number;
+  }[];
+};
+
+export default function ReportsBarChart({ data }: ReportsBarChartProps) {
   return (
     <div className="h-[320px] w-full rounded-2xl bg-slate-950/40 p-4">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={reportsDailyData} barGap={10}>
+        <BarChart data={data} barGap={10}>
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="rgba(255,255,255,0.08)"

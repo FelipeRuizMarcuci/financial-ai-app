@@ -24,8 +24,15 @@ export type DashboardData = {
     type: "REVENUE" | "EXPENSE";
     date: string;
   }[];
-  chart: {
+  chartDaily: {
     date: string;
+    income: number;
+    expense: number;
+    balance: number;
+  }[];
+
+  chartMonthly: {
+    month: string;
     income: number;
     expense: number;
     balance: number;

@@ -4,11 +4,11 @@ import AppFooter from "@/components/layout/footer";
 import AppHeader from "@/components/layout/header";
 import StatCard from "@/components/ui/statCard";
 import {
-  BarChart3,
+  // BarChart3,
   CreditCard,
   LogOut,
   PiggyBank,
-  Plus,
+  // Plus,
   Sparkles,
   TrendingDown,
   TrendingUp,
@@ -32,15 +32,33 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, [period]);
 
-  useEffect(() => {
-    getDashboard(period).then(setData);
-  }, [period]);
-
   if (!data) {
-    return <div className="text-white p-10">Carregando...</div>;
+    return (
+      <div className="min-h-screen bg-[#050913] text-white flex items-center justify-center">
+        Carregando...
+      </div>
+    );
   }
 
-  const { summary, recentTransactions, topTransactions, chart } = data;
+  const {
+    summary,
+    recentTransactions,
+    topTransactions,
+    chartDaily,
+    chartMonthly,
+  } = data;
+
+  console.log(chartDaily);
+  console.log(chartMonthly);
+
+  const chart =
+    period === "last_6_months"
+      ? (chartMonthly ?? []).map((item) => ({
+          date: item.month?.slice(0, 7),
+          income: item.income,
+          expense: item.expense,
+        }))
+      : (chartDaily ?? []);
 
   return (
     <div className="min-h-screen bg-[#050913] text-white">
@@ -58,14 +76,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex gap-3">
-            <button className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10">
+            {/* <button className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10">
               <BarChart3 className="h-4 w-4" />
               Relatórios
             </button>
             <button className="inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110">
               <Plus className="h-4 w-4" />
               Nova transação
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -208,7 +226,7 @@ export default function DashboardPage() {
                         {transaction.title}
                       </p>
                       <p className="text-sm text-slate-400">
-                        {transaction.date}
+                        {new Date(transaction.date).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
                   </div>
@@ -228,37 +246,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
-        {/* <div className="mt-6 rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/5 text-slate-200">
-              <LayoutDashboard className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">
-                Estrutura pronta para evoluir
-              </h2>
-              <p className="text-sm text-slate-400">
-                Essa base já cobre login, cadastro, dashboard, header e footer.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-white/[0.03] p-4">
-              <p className="text-sm text-slate-400">Próxima tela</p>
-              <p className="mt-2 font-semibold text-white">Lançamentos</p>
-            </div>
-            <div className="rounded-2xl bg-white/[0.03] p-4">
-              <p className="text-sm text-slate-400">Próxima tela</p>
-              <p className="mt-2 font-semibold text-white">Metas</p>
-            </div>
-            <div className="rounded-2xl bg-white/[0.03] p-4">
-              <p className="text-sm text-slate-400">Próxima tela</p>
-              <p className="mt-2 font-semibold text-white">Insights IA</p>
-            </div>
-          </div>
-        </div> */}
       </section>
 
       <AppFooter />

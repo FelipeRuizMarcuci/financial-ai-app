@@ -1,7 +1,9 @@
+"use client";
+
 import AppFooter from "@/components/layout/footer";
 import AppHeader from "@/components/layout/header";
 
-import { currency, reportsCategoryData, sampleTransactions } from "@/lib/mock";
+import { currency } from "@/lib/utils";
 import {
   ArrowDownRight,
   CalendarRange,
@@ -9,28 +11,143 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
+
 import ReportsBarChart from "./reportsBarChart";
 import ReportsDonutChart from "./reportsDonutChart";
 
+import {
+  getSummary,
+  getExpensesByCategory,
+  getDailyBalance,
+  getInsights,
+  getTopExpenses,
+} from "@/src/services/reports.service";
+
+import { useEffect, useState } from "react";
+
+type Summary = {
+  income: number;
+  expense: number;
+  balance: number;
+  totalTransactions?: number;
+};
+
+type Category = {
+  name?: string;
+  category?: string;
+  value?: number;
+  total?: number;
+};
+
+type Daily = {
+  date: string;
+  income: number;
+  expense: number;
+};
+
+type Expense = {
+  id: number;
+  title: string;
+  amount: number;
+  date: string;
+};
+
+type Insights = {
+  topExpenses: Expense[];
+  topCategory?: {
+    category: string;
+    total: number;
+  }[];
+  transactionCount?: number;
+  balance?: number;
+};
+
+type TopExpenseRaw = {
+  date: Date;
+  value: number;
+  id: number;
+  title: string;
+  category: string;
+};
+
 export default function ReportsPage() {
-  const income = sampleTransactions
-    .filter((item) => item.type === "income")
-    .reduce((acc, item) => acc + item.amount, 0);
+  const [loading, setLoading] = useState(true);
 
-  const expense = sampleTransactions
-    .filter((item) => item.type === "expense")
-    .reduce((acc, item) => acc + item.amount, 0);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [daily, setDaily] = useState<Daily[]>([]);
+  const [insights, setInsights] = useState<Insights | null>(null);
+  const [topExpensesRaw, setTopExpensesRaw] = useState<TopExpenseRaw[]>([]);
 
-  const balance = income - expense;
+  useEffect(() => {
+    setLoading(true);
 
-  const topExpenses = sampleTransactions
-    .filter((item) => item.type === "expense")
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 3);
+    Promise.all([
+      getSummary(),
+      getExpensesByCategory(),
+      getDailyBalance(),
+      getInsights(),
+      getTopExpenses(),
+    ])
+      .then(
+        ([
+          summaryRes,
+          categoriesRes,
+          dailyRes,
+          insightsRes,
+          topExpensesRes,
+        ]) => {
+          setSummary(summaryRes);
+          setCategories(categoriesRes);
+          setDaily(dailyRes);
+          setInsights(insightsRes);
+          setTopExpensesRaw(topExpensesRes);
+        },
+      )
+      .catch((err) => {
+        console.error("Erro ao carregar reports:", err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  const topCategory = [...reportsCategoryData].sort(
-    (a, b) => b.value - a.value,
-  )[0];
+  if (loading || !summary || !insights) {
+    return (
+      <div className="min-h-screen bg-[#050913] text-white flex items-center justify-center">
+        Carregando...
+      </div>
+    );
+  }
+
+  const income = summary.income;
+  const expense = summary.expense;
+  const balance = summary.balance;
+
+  const topExpenses = topExpensesRaw.map((item) => ({
+    id: item.id,
+    title: item.title,
+    categories: item.category,
+    amount: item.value,
+    date: new Date(item.date).toLocaleDateString("pt-BR"),
+  }));
+  const topCategoryRaw = insights.topCategory?.[0];
+
+  const topCategory = topCategoryRaw
+    ? {
+        name: topCategoryRaw.category,
+        value: topCategoryRaw.total,
+      }
+    : null;
+
+  const formattedDaily = daily.map((item) => ({
+    day: item.date.slice(-2),
+    income: item.income,
+    expense: item.expense,
+  }));
+
+  const formattedCategories = categories.map((c) => ({
+    name: c.category ?? c.name ?? "Outros",
+    value: c.total ?? c.value ?? 0,
+  }));
 
   return (
     <div className="min-h-screen bg-[#050913] text-white">
@@ -97,42 +214,33 @@ export default function ReportsPage() {
 
         <div className="grid gap-6 xl:grid-cols-[1.3fr,1fr]">
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-            <div className="mb-5">
-              <h2 className="text-xl font-semibold text-white">
-                Receitas vs Despesas por dia
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Comparativo diário do período selecionado
-              </p>
-            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">
+              Receitas vs Despesas por dia
+            </h2>
+            <p className="text-sm text-slate-400 mb-4">
+              Comparativo diário do período selecionado
+            </p>
 
-            <ReportsBarChart />
+            <ReportsBarChart data={formattedDaily} />
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-            <div className="mb-5">
-              <h2 className="text-xl font-semibold text-white">
-                Despesas por categoria
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Distribuição dos gastos por tipo
-              </p>
-            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">
+              Despesas por categoria
+            </h2>
+            <p className="text-sm text-slate-400 mb-4">
+              Distribuição dos gastos por tipo
+            </p>
 
-            <ReportsDonutChart />
+            <ReportsDonutChart data={formattedCategories} />
           </div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-            <div className="mb-5">
-              <h2 className="text-xl font-semibold text-white">
-                Maiores despesas
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Principais saídas financeiras do mês
-              </p>
-            </div>
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Maiores despesas
+            </h2>
 
             <div className="space-y-3">
               {topExpenses.map((expenseItem) => (
@@ -147,6 +255,9 @@ export default function ReportsPage() {
                     <div>
                       <p className="font-medium text-white">
                         {expenseItem.title}
+                      </p>
+                      <p className="font-small text-white">
+                        {expenseItem.categories}
                       </p>
                       <p className="text-sm text-slate-400">
                         {expenseItem.date}
@@ -163,33 +274,24 @@ export default function ReportsPage() {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-            <div className="mb-5">
-              <h2 className="text-xl font-semibold text-white">
-                Resumo rápido
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">
-                Leitura rápida do mês atual
-              </p>
-            </div>
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Resumo rápido
+            </h2>
 
             <div className="space-y-4">
               <div className="rounded-2xl bg-white/[0.03] p-4">
                 <p className="text-sm text-slate-400">Maior categoria</p>
                 <p className="mt-2 text-lg font-semibold text-white">
-                  {topCategory?.name}
+                  {topCategory?.name ?? "-"}
                 </p>
-                <p className="mt-1 text-sm text-slate-300">
+                <p className="text-sm text-slate-300">
                   {currency.format(topCategory?.value ?? 0)}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-white/[0.03] p-4">
                 <p className="text-sm text-slate-400">Saldo do período</p>
-                <p
-                  className={`mt-2 text-lg font-semibold ${
-                    balance >= 0 ? "text-emerald-400" : "text-rose-400"
-                  }`}
-                >
+                <p className="mt-2 text-lg font-semibold text-white">
                   {currency.format(balance)}
                 </p>
               </div>
@@ -199,7 +301,7 @@ export default function ReportsPage() {
                   Quantidade de lançamentos
                 </p>
                 <p className="mt-2 text-lg font-semibold text-white">
-                  {sampleTransactions.length}
+                  {summary.totalTransactions ?? 0}
                 </p>
               </div>
             </div>

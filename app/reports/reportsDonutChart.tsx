@@ -1,24 +1,31 @@
 "use client";
 
-import { currency, reportsCategoryData } from "@/lib/mock";
+import { currency } from "@/lib/utils";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 const COLORS = ["#34d399", "#60a5fa", "#f59e0b", "#a78bfa", "#fb7185"];
 
-export default function ReportsDonutChart() {
+type ReportsDonutChartProps = {
+  data: {
+    name: string;
+    value: number;
+  }[];
+};
+
+export default function ReportsDonutChart({ data }: ReportsDonutChartProps) {
   return (
     <div className="h-[320px] w-full rounded-2xl bg-slate-950/40 p-4">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={reportsCategoryData}
+            data={data}
             dataKey="value"
             nameKey="name"
             innerRadius={70}
             outerRadius={105}
             paddingAngle={4}
           >
-            {reportsCategoryData.map((entry, index) => (
+            {data.map((entry, index) => (
               <Cell
                 key={`${entry.name}-${index}`}
                 fill={COLORS[index % COLORS.length]}
@@ -44,7 +51,7 @@ export default function ReportsDonutChart() {
       </ResponsiveContainer>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        {reportsCategoryData.map((item, index) => (
+        {data.map((item, index) => (
           <div
             key={item.name}
             className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-slate-300"

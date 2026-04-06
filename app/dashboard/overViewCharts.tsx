@@ -1,4 +1,3 @@
-// components/dashboard/OverviewChart.tsx
 "use client";
 
 import { currency } from "@/lib/utils";
@@ -47,6 +46,15 @@ export default function OverviewChart({ data }: OverviewChartProps) {
             axisLine={false}
             tickLine={false}
             tick={{ fill: "#94a3b8", fontSize: 12 }}
+            tickFormatter={(value) => {
+              const [year, month] = value.split("-");
+              return new Date(Number(year), Number(month) - 1).toLocaleString(
+                "pt-BR",
+                {
+                  month: "short",
+                },
+              );
+            }}
           />
 
           <YAxis

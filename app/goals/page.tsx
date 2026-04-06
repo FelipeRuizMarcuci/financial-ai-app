@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import AppFooter from "@/components/layout/footer";
 import AppHeader from "@/components/layout/header";
 import AppModal from "@/components/ui/appModal";
 import { PiggyBank, Plus, Target, TrendingUp, Wallet } from "lucide-react";
+
+import {
+  getGoals,
+  createGoal,
+  addValueToGoal,
+} from "@/src/services/goals.service";
 
 type Goal = {
   id: number;
@@ -13,42 +19,42 @@ type Goal = {
   target: number;
 };
 
-const initialGoals: Goal[] = [
-  {
-    id: 1,
-    title: "Reserva de emergência",
-    current: 4200,
-    target: 10000,
-  },
-  {
-    id: 2,
-    title: "Notebook novo",
-    current: 2800,
-    target: 6500,
-  },
-  {
-    id: 3,
-    title: "Viagem de férias",
-    current: 1500,
-    target: 5000,
-  },
-];
-
 const money = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[]>(initialGoals);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [inputs, setInputs] = useState<Record<number, string>>({});
 
-  // 🔥 NOVOS STATES (modal)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: "",
     target: "",
+    dateDeadline: "",
   });
+
+  useEffect(() => {
+    loadGoals();
+  }, []);
+
+  async function loadGoals() {
+    try {
+      const res = await getGoals();
+
+      setGoals(
+        res.data.map((g) => ({
+          id: g.id,
+          title: g.title,
+          current: g.value,
+          target: g.targetValue,
+        })),
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   function handleInputChange(goalId: number, value: string) {
     const normalized = value.replace(",", ".");
@@ -58,46 +64,51 @@ export default function GoalsPage() {
     }));
   }
 
-  function handleAddFunds(goalId: number) {
+  async function handleAddFunds(goalId: number) {
     const rawValue = inputs[goalId];
     const amount = Number(rawValue);
 
     if (!rawValue || Number.isNaN(amount) || amount <= 0) return;
 
-    setGoals((prev) =>
-      prev.map((goal) =>
-        goal.id === goalId
-          ? {
-              ...goal,
-              current: Math.min(goal.current + amount, goal.target),
-            }
-          : goal,
-      ),
-    );
+    try {
+      await addValueToGoal(goalId, amount);
+      await loadGoals();
 
-    setInputs((prev) => ({
-      ...prev,
-      [goalId]: "",
-    }));
+      setInputs((prev) => ({
+        ...prev,
+        [goalId]: "",
+      }));
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  // 🔥 NOVA FUNÇÃO (criar meta)
-  function handleCreateGoal() {
+  async function handleCreateGoal() {
     const target = Number(newGoal.target);
 
-    if (!newGoal.title || Number.isNaN(target) || target <= 0) return;
+    if (
+      !newGoal.title ||
+      Number.isNaN(target) ||
+      target <= 0 ||
+      !newGoal.dateDeadline
+    )
+      return;
 
-    const newItem: Goal = {
-      id: Date.now(),
-      title: newGoal.title,
-      current: 0,
-      target,
-    };
+    try {
+      await createGoal({
+        title: newGoal.title,
+        targetValue: target,
+        value: 0,
+        dateDeadline: newGoal.dateDeadline,
+      });
 
-    setGoals((prev) => [newItem, ...prev]);
+      await loadGoals();
 
-    setNewGoal({ title: "", target: "" });
-    setIsModalOpen(false);
+      setNewGoal({ title: "", target: "", dateDeadline: "" });
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   const summary = useMemo(() => {
@@ -134,7 +145,6 @@ export default function GoalsPage() {
             </p>
           </div>
 
-          {/* 🔥 BOTÃO ATUALIZADO */}
           <button
             onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110"
@@ -255,7 +265,6 @@ export default function GoalsPage() {
         </div>
       </section>
 
-      {/* 🔥 MODAL ADICIONADO */}
       <AppModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -281,6 +290,18 @@ export default function GoalsPage() {
               setNewGoal((prev) => ({ ...prev, target: e.target.value }))
             }
             className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none placeholder:text-slate-500"
+          />
+
+          <input
+            type="date"
+            value={newGoal.dateDeadline}
+            onChange={(e) =>
+              setNewGoal((prev) => ({
+                ...prev,
+                dateDeadline: e.target.value,
+              }))
+            }
+            className="h-11 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-sm text-white outline-none"
           />
 
           <button
