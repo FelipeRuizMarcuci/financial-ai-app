@@ -1,7 +1,8 @@
+"use client";
+
 import Logo from "@/components/ui/logo";
 import AuthCard from "@/components/ui/authCard";
-import { User } from "lucide-react";
-import Input from "@/components/ui/input";
+import { register } from "@/src/services/register.service";
 
 export default function RegisterPage() {
   return (
@@ -13,15 +14,22 @@ export default function RegisterPage() {
           </div>
 
           <AuthCard
+            mode="register"
             title="Criar conta"
             subtitle="Comece a controlar suas finanças com IA"
             buttonText="Criar conta"
-            extraField={
-              <Input
-                icon={<User className="h-4 w-4" />}
-                placeholder="Seu nome"
-              />
-            }
+            onSubmit={async ({ name, email, password, confirmPassword }) => {
+              const res = await register(
+                name!,
+                email,
+                password,
+                confirmPassword!,
+              );
+
+              return {
+                access_token: res.token.access_token,
+              };
+            }}
             footerText="Já tem conta?"
             footerAction="Fazer login"
             footerHref="/login"

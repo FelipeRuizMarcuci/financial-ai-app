@@ -3,6 +3,11 @@
 import Link from "next/link";
 import Logo from "@/components/ui/logo";
 import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+
+type TokenPayload = {
+  name: string;
+};
 
 export default function AppHeader() {
   const [isLogged, setIsLogged] = useState(false);
@@ -12,8 +17,10 @@ export default function AppHeader() {
     const token = localStorage.getItem("token");
 
     if (token) {
+      const decoded = jwtDecode<TokenPayload>(token);
+
       setIsLogged(true);
-      setUserName("Felipe"); // depois você troca isso
+      setUserName(decoded.name); // depois você troca isso
     }
   }, []);
 
