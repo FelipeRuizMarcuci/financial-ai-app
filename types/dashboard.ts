@@ -37,4 +37,18 @@ export type DashboardData = {
     expense: number;
     balance: number;
   }[];
+
+  insights: {
+    type: "pattern" | "info" | "warning" | "anomaly" | "trend";
+    message: string;
+  }[];
+
+  behavior: {
+    type: "pattern" | "anomaly" | "trend" | "info";
+    message: string;
+  }[];
+
+  forecast: {
+    forecast: number;
+  };
 };
